@@ -1,0 +1,35 @@
+name: Otomatik Film Dizi Botu
+
+on:
+  schedule:
+    - cron: '0 */6 * * *' # Her 6 saatte bir otomatik çalışır
+  workflow_dispatch: # Manuel test etmek için buton sağlar
+
+jobs:
+  update-database:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Depoyu Kopyala
+        uses: actions/checkout@v4
+
+      - name: Python Kurulumu
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Bağımlılıkları Yükle
+        run: pip install requests
+
+      - name: Botu Çalıştır ve Verileri Güncelle
+        env:
+          TMDB_API_KEY: ${{ secrets.TMDB_API_KEY }}
+        run: python bot.py
+
+      - name: Değişiklikleri GitHub'a Otomatik Kaydet
+        run: |
+          git config --global user.name "Bot Otomasyon"
+          git config --global user.email "bot@actions.github.com"
+          git add data/
+          git diff --quiet && git diff --staged --quiet || (git commit -m "Otomatik veri tabanı güncellemesi" && git push)
